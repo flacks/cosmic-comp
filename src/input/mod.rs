@@ -980,11 +980,31 @@ impl State {
                     .cloned();
                 if let Some(seat) = maybe_seat {
                     self.common.idle_notifier_state.notify_activity(&seat);
-                    if event.fingers() >= 3 && !workspace_overview_is_open(&seat.active_output()) {
+                    let pointer = seat.get_pointer().unwrap();
+                    // Don't consume gestures if pointer is grabbed (e.g., by input-capture portal)
+                    // or if an active pointer constraint exists (e.g., locked pointer from layer-shell app)
+                    let is_grabbed = pointer.is_grabbed();
+                    let has_active_constraint = if let Some(focus) = pointer.current_focus() {
+                        if let Some(surface) = focus.wl_surface() {
+                            let mut has_constraint = false;
+                            with_pointer_constraint(&surface, &pointer, |constraint| {
+                                has_constraint = constraint.is_some_and(|c| c.is_active());
+                            });
+                            has_constraint
+                        } else {
+                            false
+                        }
+                    } else {
+                        false
+                    };
+                    if event.fingers() >= 3
+                        && !workspace_overview_is_open(&seat.active_output())
+                        && !is_grabbed
+                        && !has_active_constraint
+                    {
                         self.common.gesture_state = Some(GestureState::new(event.fingers()));
                     } else {
                         let serial = SERIAL_COUNTER.next_serial();
-                        let pointer = seat.get_pointer().unwrap();
                         pointer.gesture_swipe_begin(
                             self,
                             &GestureSwipeBeginEvent {

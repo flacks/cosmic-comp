@@ -75,6 +75,7 @@
               stdenv.cc.cc.lib
               pixman
               libdisplay-info
+              libgbm
             ];
 
             runtimeDependencies = with pkgs; [

@@ -484,22 +484,14 @@ impl State {
 
                     let output_geometry = output.geometry();
 
-                    // Don't clamp pointer when session is locked - allow cursor to reach edges
-                    // This enables layer-shell input capture barriers (e.g., for lan-mouse) to work
-                    let shell = self.common.shell.read();
-                    let is_locked = shell.session_lock.is_some();
-                    std::mem::drop(shell);
-
-                    if !is_locked {
-                        position.x = position.x.clamp(
-                            output_geometry.loc.x as f64,
-                            ((output_geometry.loc.x + output_geometry.size.w) as f64).next_lower(), // FIXME: Replace with f64::next_down when stable
-                        );
-                        position.y = position.y.clamp(
-                            output_geometry.loc.y as f64,
-                            ((output_geometry.loc.y + output_geometry.size.h) as f64).next_lower(), // FIXME: Replace with f64::next_down when stable
-                        );
-                    }
+                    position.x = position.x.clamp(
+                        output_geometry.loc.x as f64,
+                        ((output_geometry.loc.x + output_geometry.size.w) as f64).next_lower(), // FIXME: Replace with f64::next_down when stable
+                    );
+                    position.y = position.y.clamp(
+                        output_geometry.loc.y as f64,
+                        ((output_geometry.loc.y + output_geometry.size.h) as f64).next_lower(), // FIXME: Replace with f64::next_down when stable
+                    );
 
                     // If confined, don't move pointer if it would go outside surface or region
                     if pointer_confined {
